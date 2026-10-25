@@ -1,0 +1,10 @@
+{
+  "id": "top-date-stamp",
+  "name": "Top Date Stamp",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "On the first keystroke of the day at the very top of a note, inserts the date (dd.mm.yyyy) on its own line.",
+  "author": "dothanhhung",
+  "authorUrl": "https://github.com/dothanhhung",
+  "isDesktopOnly": false
+}
