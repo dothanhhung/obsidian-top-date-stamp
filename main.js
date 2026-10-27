@@ -35,9 +35,12 @@ module.exports = class TopDateStampPlugin extends Plugin {
   }
 
   onInput(view, from, to, text) {
-    // Only a plain typed character at the very top of the document.
-    if (from !== 0 || to !== 0 || !text || text.includes('\n')) return false;
+    // Only a plain typed character above all existing text
+    // (anywhere in the blank gap at the top of the note).
+    if (from !== to || !text || text.includes('\n')) return false;
     if (view.composing) return false;
+    const doc = view.state.doc;
+    if (doc.sliceString(0, from).trim() !== '') return false;
 
     const info = view.state.field(editorInfoField, false);
     const file = info && info.file;
@@ -48,14 +51,19 @@ module.exports = class TopDateStampPlugin extends Plugin {
     if (this.stamped[file.path] === today) return false;
 
     const stamp = formatDate(now);
-    const firstLine = view.state.doc.line(1).text.trim();
+    const firstText = doc.toString().trim().split('\n')[0].trim();
     this.stamped[file.path] = today;
     this.save();
-    if (firstLine === stamp) return false; // already dated today by hand
+    if (firstText === stamp) return false; // already dated today by hand
 
-    const insert = `${stamp}\n${text}`;
+    // Two blank lines above the date leave a gap to click into tomorrow.
+    // Keep one blank line between the new text and the older text below.
+    const after = doc.sliceString(from);
+    const breaks = after.trim() ? (after.match(/^\s*/)[0].match(/\n/g) || []).length : 2;
+    const pad = '\n'.repeat(Math.max(0, 2 - breaks));
+    const insert = `\n\n${stamp}\n${text}`;
     view.dispatch({
-      changes: { from: 0, to: 0, insert },
+      changes: { from: 0, to: from, insert: insert + pad },
       selection: { anchor: insert.length },
       userEvent: 'input.type',
     });
